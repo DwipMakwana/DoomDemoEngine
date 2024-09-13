@@ -3,87 +3,17 @@
 #include <math.h>
 #include <iostream>
 #include <stdio.h>
-#include <GL/glut.h>
+#include <GL/glut.h>    
 
-constexpr int res = 1;                      //0=160x120 1=360x240 4=640x480
-constexpr int SW = 160 * res;               //Screen width
-constexpr int SH = 120 * res;               //Screen height
-constexpr int SW2 = SW / 2;                 //Half of screen width
-constexpr int SH2 = SH / 2;                 //Half of screen height
-constexpr int pixelScale = 4 / res;         //OpenGL pixel scale
-constexpr int GLSW = SW * pixelScale;       //OpenGL window width
-constexpr int GLSH = SH * pixelScale;       //OpenGL window height
-constexpr int numSect = 4;                  //Number of sectors
-constexpr int numWall = 16;                 //Number of walls
-//------------------------------------------------------------------------------
+#include "include/core/Engine.h"
+#include "include/util/TextureLoader.h"
+#include <string>
 
-struct Time
+TextureLoader* texLoader = new TextureLoader;
+
+void DrawPixel(int x, int y, int r, int g, int b)                  //Draw a pixel at x/y with rgb
 {
-    int fr1, fr2;           //Frame 1 frame 2, to create constant frame rate
-};
-
-struct Keys
-{
-    int w, s, a, d;         //Move up, down, left, right
-    int sl, sr;             //Strafe left, right 
-    int m;                  //Move up, down, look up, down
-};
-
-struct Math
-{
-    float cos[360];         //Save sin cos in values 0-360 degrees
-    float sin[360];
-};
-
-struct Player 
-{
-    int x, y, z;            //Player position, Z is up
-    int a;                  //Playe angle of roation, left and right
-    int l;                  //Variable to look uo and down
-};
-
-struct Walls
-{
-    int x1, x2;             //Bottom line point 1
-    int y1, y2;             //Bottom line point 2
-    int c;                  //Wall color
-};
-
-struct Sector 
-{
-    int ws, we;             //Wall number start and end
-    int z1, z2;             //Height of bottom and top
-    int d;                  //Add Y distances to sort drawing order
-    int c1, c2;             //Bottom and top color;
-    int surf[SW];           //To hold points for surfaces
-    int surface;            //Is there a surfaces to draw
-};
-
-Sector S[30];
-Walls W[30];
-Player P;
-Math M;
-Time T;
-Keys K;
-
-//------------------------------------------------------------------------------
-
-void Pixel(int x, int y, int c)                  //Draw a pixel at x/y with rgb
-{
-    int rgb[3];
-    switch (c) {
-    case 0: rgb[0] = 255;   rgb[1] = 255;   rgb[2] = 0;     break; //Yellow	
-    case 1: rgb[0] = 160;   rgb[1] = 160;   rgb[2] = 0;     break; //Yellow darker	
-    case 2: rgb[0] = 0;     rgb[1] = 255;   rgb[2] = 0;     break; //Green	
-    case 3: rgb[0] = 0;     rgb[1] = 160;   rgb[2] = 0;     break; //Green darker	
-    case 4: rgb[0] = 0;     rgb[1] = 255;   rgb[2] = 255;   break; //Cyan	
-    case 5: rgb[0] = 0;     rgb[1] = 160;   rgb[2] = 160;   break; //Cyan darker
-    case 6: rgb[0] = 160;   rgb[1] = 100;   rgb[2] = 0;     break; //Brown	
-    case 7: rgb[0] = 110;   rgb[1] = 50;    rgb[2] = 0;     break; //Brown darker
-    case 8: rgb[0] = 0;     rgb[1] = 60;    rgb[2] = 130;   break; //Background 
-    }
-
-    glColor3ub(rgb[0], rgb[1], rgb[2]);
+    glColor3ub(r, g, b);
     glBegin(GL_POINTS);
     glVertex2i(x * pixelScale + 2, y * pixelScale + 2);
     glEnd();
@@ -92,7 +22,7 @@ void Pixel(int x, int y, int c)                  //Draw a pixel at x/y with rgb
 void MovePlayer()
 {
     //Move up, down, left, right
-    if (K.a == 1 && K.m == 0) 
+    if (K.a == 1 && K.m == 0)
     {
         P.a -= 4;
 
@@ -102,7 +32,7 @@ void MovePlayer()
         }
     }
     if (K.d == 1 && K.m == 0)
-    { 
+    {
         P.a += 4;
 
         if (P.a > 359)
@@ -113,37 +43,37 @@ void MovePlayer()
 
     int dx = M.sin[P.a] * 10.0;
     int dy = M.cos[P.a] * 10.0;
-    
+
     if (K.w == 1 && K.m == 0)
-    { 
+    {
         P.x += dx;
         P.y += dy;
     }
-    if (K.s == 1 && K.m == 0) 
-    { 
+    if (K.s == 1 && K.m == 0)
+    {
         P.x -= dx;
         P.y -= dy;
     }
 
     //Strafe left, right
-    if (K.sr == 1) 
-    { 
+    if (K.sr == 1)
+    {
         P.x += dy;
         P.y -= dx;
     }
-    if (K.sl == 1) 
+    if (K.sl == 1)
     {
         P.x -= dy;
         P.y += dx;
     }
 
     //Move up, down, look up, look down
-    if (K.a == 1 && K.m == 1) 
-    { 
+    if (K.a == 1 && K.m == 1)
+    {
         P.l -= 1;
     }
-    if (K.d == 1 && K.m == 1) 
-    { 
+    if (K.d == 1 && K.m == 1)
+    {
         P.l += 1;
     }
     if (K.w == 1 && K.m == 1)
@@ -160,7 +90,7 @@ void ClearBackground()
 {
     for (int y = 0; y < SH; y++)
     {
-        for (int x = 0; x < SW; x++) { Pixel(x, y, 8); } //Clear background color
+        for (int x = 0; x < SW; x++) { DrawPixel(x, y, 0, 61, 30); } //Clear background color
     }
 }
 
@@ -182,9 +112,15 @@ void ClipBehindPlayer(int* x1, int* y1, int* z1, int x2, int y2, int z2)    //Cl
     *z1 = *z1 + s * (z2 - (*z1));
 }
 
-void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int c, int s)
+void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int frontBack)
 {
     int x, y;
+
+    //Wall texture
+    int wt = W[w].wt;
+
+    //Horizontal wall texture starting and step value
+    float ht = 0, ht_step = (float)texLoader->Textures[wt].w / (float)(x2 - x1);
 
     //Hold differences in the distance
     int dyb = b2 - b1;          //Y distance of the bottom line
@@ -200,22 +136,23 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int c, int s)
 
     //Clip X
     //Clip left
-    if (x1 < 1)
+    if (x1 < 0)
     {
-        x1 = 1;
+        ht -= ht_step * x1;
+        x1 = 0;
     }
-    if (x2 < 1)
+    if (x2 < 0)
     {
-        x2 = 1;
+        x2 = 0;
     }
     //Clip right
-    if (x1 > SW - 1)
+    if (x1 > SW)
     {
-        x1 = SW - 1;
+        x1 = SW;
     }
-    if (x2 > SW - 1)
+    if (x2 > SW)
     {
-        x2 = SW - 1;
+        x2 = SW;
     }
 
     //Draw x vertical lines
@@ -224,55 +161,70 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int c, int s)
         //The Y start and end point
         int y1 = dyb * (x - xs + 0.5) / dx + b1;        //Y bottom point
         int y2 = dyt * (x - xs + 0.5) / dx + t1;        //Y Top point
-        
+
+        //Vertical wall texture starting and step value
+        float vt = 0, vt_step = (float)texLoader->Textures[wt].h / (float)(y2 - y1);
+
         //Clip Y
-        if (y1 < 1)
+        if (y1 < 0)
         {
-            y1 = 1;
+            vt -= vt_step * y1;
+            y1 = 0;
         }
-        if (y2 < 1)
+        if (y2 < 0)
         {
-            y2 = 1;
+            y2 = 0;
         }
-        if (y1 > SH - 1)
+        if (y1 > SH)
         {
-            y1 = SH - 1;
+            y1 = SH;
         }
-        if (y2 > SH - 1)
+        if (y2 > SH)
         {
-            y2 = SH - 1;
-        }
-
-        //Surface
-        if (S[s].surface == 1)          //Save bottom points
-        {
-            S[s].surf[x] = y1;
-            continue;
-        }
-        if (S[s].surface == 2)          //Save top points
-        {
-            S[s].surf[x] = y2;
-            continue;
-        }
-        if (S[s].surface == -1)         //Bottom
-        {
-            for (y = S[s].surf[x]; y < y1; y++)
-            {
-                Pixel(x, y, S[s].c2);
-            }
-        }
-        if (S[s].surface == -2)         //Top
-        {
-            for (y = y1; y < S[s].surf[x]; y++)
-            {
-                Pixel(x, y, S[s].c2);
-            }
+            y2 = SH;
         }
 
-        //Normal wall
-        for (y = y1; y < y2; y++)
+        //Draw front wall
+        if (frontBack == 0)
         {
-            Pixel(x, y, c);
+            if(S[s].surface == 1)
+            {
+                S[s].surf[x] = y1;
+            }
+            if (S[s].surface == 2)
+            {
+                S[s].surf[x] = y2;
+            }
+
+            //Normal wall
+            for (y = y1; y < y2; y++)
+            {
+                int pixel = (texLoader->Textures[wt].h - vt - 1) * 3 * texLoader->Textures[wt].w + ht * 3;
+                int r = texLoader->Textures[wt].name[pixel + 0];
+                int g = texLoader->Textures[wt].name[pixel + 1];
+                int b = texLoader->Textures[wt].name[pixel + 2];
+                DrawPixel(x, y, r, g, b);
+                vt += vt_step;
+            }
+            ht += ht_step;
+        }
+
+        if (frontBack == 1)
+        {
+            if (S[s].surface == 1)
+            {
+                y2 = S[s].surf[x];
+            }
+            if (S[s].surface == 2)
+            {
+                y1 = S[s].surf[x];
+            }
+
+            //Surfaces
+            for (y = y1; y < y2; y++)
+            {
+                DrawPixel(x, y, 255, 0, 0);
+            }
         }
     }
 }
@@ -285,7 +237,7 @@ int Dist(int x1, int y1, int x2, int y2)
 
 void Draw3D()
 {
-    int s, w, loop;
+    int x, s, w, loop, frontBack, cycles;
     int wx[4], wy[4], wz[4];
     float CS = M.cos[P.a], SN = M.sin[P.a];
 
@@ -307,22 +259,35 @@ void Draw3D()
     for (s = 0; s < numSect; s++)
     {
         //Clear distance
-        S[s].d = 0; 
+        S[s].d = 0;
 
         if (P.z < S[s].z1)          //Botttom surface
         {
             S[s].surface = 1;
+            cycles = 2;
+
+            for (x = 0; x < SW; x++)
+            {
+                S[s].surf[s] = SH;
+            }
         }
         else if (P.z > S[s].z2)     //Top surface
         {
             S[s].surface = 2;
+            cycles = 2;
+            
+            for (x = 0; x < SW; x++)
+            {
+                S[s].surf[s] = 0;
+            }
         }
         else                        //No surfaces
         {
             S[s].surface = 0;
+            cycles = 1;
         }
 
-        for (loop = 0; loop < 2; loop++)
+        for (frontBack = 0; frontBack < cycles; frontBack++)
         {
             for (w = S[s].ws; w < S[s].we; w++)
             {
@@ -331,7 +296,7 @@ void Draw3D()
                 int x2 = W[w].x2 - P.x, y2 = W[w].y2 - P.y;
 
                 //Swap for surface
-                if (loop == 0)
+                if (frontBack == 1)
                 {
                     int swp = x1;
                     x1 = x2;
@@ -358,19 +323,21 @@ void Draw3D()
                 S[s].d += Dist(0, 0, (wx[0] + wx[1]) / 2, (wy[0] + wy[1]) / 2);
 
                 //World Z height;
-                wz[0] = 0 - P.z + ((P.l * wy[0]) / 32.0);
-                wz[1] = 0 - P.z + ((P.l * wy[1]) / 32.0);
-                wz[2] = wz[0] + S[s].z2;
-                wz[3] = wz[1] + S[s].z2;                                 //Top line has the same z
+                wz[0] = S[s].z1 - P.z + ((P.l * wy[0]) / 32.0);
+                wz[1] = S[s].z1 - P.z + ((P.l * wy[1]) / 32.0);
+                wz[2] = S[s].z2 - P.z + ((P.l * wy[0]) / 32.0);
+                wz[3] = S[s].z2 - P.z + ((P.l * wy[1]) / 32.0);           //Top line has the same z
 
                 //Do not draw if behind the player
                 if (wy[0] < 1 && wy[1] < 1) { continue; }             //Wall behind the player, do not draw!
+
                 //Point 1 behind player, clip!
                 if (wy[0] < 1)
                 {
                     ClipBehindPlayer(&wx[0], &wy[0], &wz[0], wx[1], wy[1], wz[1]);      //Bottom line
                     ClipBehindPlayer(&wx[2], &wy[2], &wz[2], wx[3], wy[3], wz[3]);      //Top line
                 }
+
                 //Point 2 behind the player, clip!
                 if (wy[1] < 1)
                 {
@@ -392,12 +359,13 @@ void Draw3D()
                 wy[3] = wz[3] * 200 / wy[3] + SH2;
 
                 //Draw points
-                DrawWall(wx[0], wx[1], wy[0], wy[1], wy[2], wy[3], W[w].c, s);
+                DrawWall(wx[0], wx[1], wy[0], wy[1], wy[2], wy[3], s, w, frontBack);
             }
             //Find average sector distance
-            S[s].d /= (S[s].we - S[s].ws);
-            //Flip to negative to draw surface
-            S[s].surface *= -1;
+            if (S[s].d != 0)
+            {
+                S[s].d /= (S[s].we - S[s].ws);
+            }
         }
     }
 }
@@ -428,6 +396,7 @@ void KeysDown(unsigned char key, int x, int y)
     if (key == 'm') { K.m = 1; }
     if (key == ',') { K.sr = 1; }
     if (key == '.') { K.sl = 1; }
+    if (key == 13) { texLoader->Load(); }
 }
 
 void KeysUp(unsigned char key, int x, int y)
@@ -441,39 +410,6 @@ void KeysUp(unsigned char key, int x, int y)
     if (key == '.') { K.sl = 0; }
 }
 
-int LoadSectors[] =
-{
-    //Wall Start, Wall end, z1 height, z2 height, bottom color, top color
-    0, 4, 0, 40, 2, 3,        //Sector 1
-    4, 8, 0, 40, 4, 5,        //Sector 2
-    8, 12, 0, 40, 6, 7,       //Sector 3
-    12, 16, 0, 40, 0, 1,      //Sector 4
-};
-
-int LoadWalls[] =
-{
-    //x1, y1, x2, y2, color
-    0, 0, 32, 0, 0,
-    32, 0, 32, 32, 1,
-    32, 32, 0, 32, 0,
-    0, 32, 0, 0, 1, 
-
-    64, 0, 96, 0, 2,
-    96, 0, 96, 32, 3,
-    96, 32, 64, 32, 2,
-    64, 32, 64, 0, 3,
-
-    64, 64, 96, 64, 4,
-    96, 64, 96, 96, 5,
-    96, 96, 64, 96, 4,
-    64, 96, 64, 64, 5,
-
-    0, 64, 32, 64, 6,
-    32, 64, 32, 96, 7,
-    32, 96, 0, 96, 6,
-    0, 96, 0, 64, 7,
-};
-
 void Init()
 {
     int x;
@@ -485,30 +421,10 @@ void Init()
     }
 
     //Init player variables
-    P.x = 70; P.y = -110; P.z = 20; P.a = 0; P.l = 0;       
+    P.x = 70; P.y = -110; P.z = 20; P.a = 0; P.l = 0;
 
-    //Load sectors
-    int s, w, v1 = 0, v2 = 0;
-    for (s = 0; s < numSect; s++)
-    {
-        S[s].ws = LoadSectors[v1 + 0];                          //Wall startnumber
-        S[s].we = LoadSectors[v1 + 1];                          //Wall end number
-        S[s].z1 = LoadSectors[v1 + 2];                          //Sector obttom height
-        S[s].z2 = LoadSectors[v1 + 3] - LoadSectors[v1 + 2];    //Sector top height 
-        S[s].c1 = LoadSectors[v1 + 4];
-        S[s].c2 = LoadSectors[v1 + 5];
-        v1 += 6;
-
-        for (w = S[s].ws; w < S[s].we; w++)
-        {
-            W[w].x1 = LoadWalls[v2 + 0];        //Bottom x1
-            W[w].y1 = LoadWalls[v2 + 1];        //Bottom x2
-            W[w].x2 = LoadWalls[v2 + 2];        //Top x2
-            W[w].y2 = LoadWalls[v2 + 3];        //Top y2
-            W[w].c = LoadWalls[v2 + 4];         //Wall color
-            v2 += 5;
-        }
-    }
+    //Define textures
+    texLoader->DefineTextures();
 }
 
 int main(int argc, char* argv[])
@@ -517,7 +433,8 @@ int main(int argc, char* argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowPosition(GLSW / 2, GLSH / 2);
     glutInitWindowSize(GLSW, GLSH);
-    glutCreateWindow("");
+    glutCreateWindow("Doom Engine Demo");
+    glutSetIconTitle("assets/doom-wolfenstein-humbnail.png");
     glPointSize(pixelScale);                        // pixel size
     gluOrtho2D(0, GLSW, 0, GLSH);                   // origin bottom left
     Init();
@@ -527,4 +444,3 @@ int main(int argc, char* argv[])
     glutMainLoop();
     return 0;
 }
-

@@ -76,8 +76,9 @@
     <LibraryWPath>$(SolutionDir)\Linking\lib;$(WindowsSDK_MetadataPath);</LibraryWPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)\Linking\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>$(SolutionDir)\Linking\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <IncludePath>$(SolutionDir)\DoomDemo;$(SolutionDir)\Linking\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\DoomDemo\lib;$(SolutionDir)\Linking\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)</LibraryPath>
+    <ExternalIncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,6 +93,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\My Data\Projects\C++ Projects\DoomDemo\Linking\include;C:\My Data\Projects\C++ Projects\DoomDemo\Linking\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>GL\glut32.lib;GLFW\glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/FORCE:MULTIPLE %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,7 +145,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\core\Engine.cpp" />
+    <ClCompile Include="src\util\TextureLoader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\core\Engine.h" />
+    <ClInclude Include="include\util\TextureLoader.h" />
+    <ClInclude Include="textures\T_00.h" />
+    <ClInclude Include="textures\T_01.h" />
+    <ClInclude Include="textures\T_02.h" />
+    <ClInclude Include="textures\T_03.h" />
+    <ClInclude Include="textures\T_04.h" />
+    <ClInclude Include="textures\T_05.h" />
+    <ClInclude Include="textures\T_06.h" />
+    <ClInclude Include="textures\T_07.h" />
+    <ClInclude Include="textures\T_08.h" />
+    <ClInclude Include="textures\T_09.h" />
+    <ClInclude Include="textures\T_10.h" />
+    <ClInclude Include="textures\T_11.h" />
+    <ClInclude Include="textures\T_12.h" />
+    <ClInclude Include="textures\T_13.h" />
+    <ClInclude Include="textures\T_14.h" />
+    <ClInclude Include="textures\T_15.h" />
+    <ClInclude Include="textures\T_16.h" />
+    <ClInclude Include="textures\T_17.h" />
+    <ClInclude Include="textures\T_18.h" />
+    <ClInclude Include="textures\T_19.h" />
+    <ClInclude Include="textures\T_NUMBERS.h" />
+    <ClInclude Include="textures\T_VIEW2D.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\doom-wolfenstein-humbnail.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

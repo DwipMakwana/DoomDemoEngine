@@ -4,16 +4,69 @@
     <Filter Include="src">
       <UniqueIdentifier>{41fa7f78-445e-4f63-80ee-c5cea2dc7a97}</UniqueIdentifier>
     </Filter>
-    <Filter Include="lib">
-      <UniqueIdentifier>{24582672-531c-4f7e-923f-dbbfe1f88b56}</UniqueIdentifier>
+    <Filter Include="header">
+      <UniqueIdentifier>{db82f788-cff4-4e3f-a27c-fdafdaab75d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header\core">
+      <UniqueIdentifier>{6d22f8c4-df65-41f2-bd79-376595180aaf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\core">
+      <UniqueIdentifier>{17e8dda7-78fd-4f34-9d2b-723e8bc0e73f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\levelEditor">
+      <UniqueIdentifier>{e0dcf84f-2d13-4283-91cf-eea856bb7239}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header\levelEditor">
+      <UniqueIdentifier>{82619c46-d3c5-4979-98db-b1d1cf902317}</UniqueIdentifier>
     </Filter>
     <Filter Include="assets">
-      <UniqueIdentifier>{5f5ca6a5-2c42-429a-a117-3c732f2fe937}</UniqueIdentifier>
+      <UniqueIdentifier>{e83717d4-d7e4-44dd-9b2d-8f49262babd2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="src\util\TextureLoader.cpp">
+      <Filter>src\levelEditor</Filter>
     </ClCompile>
+    <ClCompile Include="src\core\Engine.cpp">
+      <Filter>src\core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\util\TextureLoader.h">
+      <Filter>header\levelEditor</Filter>
+    </ClInclude>
+    <ClInclude Include="include\core\Engine.h">
+      <Filter>header\core</Filter>
+    </ClInclude>
+    <ClInclude Include="textures\T_00.h" />
+    <ClInclude Include="textures\T_01.h" />
+    <ClInclude Include="textures\T_02.h" />
+    <ClInclude Include="textures\T_03.h" />
+    <ClInclude Include="textures\T_04.h" />
+    <ClInclude Include="textures\T_05.h" />
+    <ClInclude Include="textures\T_06.h" />
+    <ClInclude Include="textures\T_07.h" />
+    <ClInclude Include="textures\T_08.h" />
+    <ClInclude Include="textures\T_09.h" />
+    <ClInclude Include="textures\T_10.h" />
+    <ClInclude Include="textures\T_11.h" />
+    <ClInclude Include="textures\T_12.h" />
+    <ClInclude Include="textures\T_13.h" />
+    <ClInclude Include="textures\T_14.h" />
+    <ClInclude Include="textures\T_15.h" />
+    <ClInclude Include="textures\T_16.h" />
+    <ClInclude Include="textures\T_17.h" />
+    <ClInclude Include="textures\T_18.h" />
+    <ClInclude Include="textures\T_19.h" />
+    <ClInclude Include="textures\T_NUMBERS.h" />
+    <ClInclude Include="textures\T_VIEW2D.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="assets\doom-wolfenstein-humbnail.png">
+      <Filter>assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>
