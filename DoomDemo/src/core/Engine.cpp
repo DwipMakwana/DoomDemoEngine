@@ -90,7 +90,7 @@ void ClearBackground()
 {
     for (int y = 0; y < SH; y++)
     {
-        for (int x = 0; x < SW; x++) { DrawPixel(x, y, 0, 61, 30); } //Clear background color
+        for (int x = 0; x < SW; x++) { DrawPixel(x, y, 0, 61, 130); } //Clear background color
     }
 }
 
@@ -199,7 +199,7 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
             //Normal wall
             for (y = y1; y < y2; y++)
             {
-                int pixel = (texLoader->Textures[wt].h - vt - 1) * 3 * texLoader->Textures[wt].w + ht * 3;
+                int pixel = (int)(texLoader->Textures[wt].h - vt - 1) * 3 * texLoader->Textures[wt].w + (int)ht * 3;
                 int r = texLoader->Textures[wt].name[pixel + 0];
                 int g = texLoader->Textures[wt].name[pixel + 1];
                 int b = texLoader->Textures[wt].name[pixel + 2];
@@ -434,7 +434,6 @@ int main(int argc, char* argv[])
     glutInitWindowPosition(GLSW / 2, GLSH / 2);
     glutInitWindowSize(GLSW, GLSH);
     glutCreateWindow("Doom Engine Demo");
-    glutSetIconTitle("assets/doom-wolfenstein-humbnail.png");
     glPointSize(pixelScale);                        // pixel size
     gluOrtho2D(0, GLSW, 0, GLSH);                   // origin bottom left
     Init();
