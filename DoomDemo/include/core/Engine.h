@@ -1,7 +1,7 @@
 #pragma once
 
-int numSect = 0;                  //Number of sectors
-int numWall = 0;                 //Number of walls
+int numSect = 0;                            //Number of sectors
+int numWall = 0;                            //Number of walls
 constexpr int res = 1;                      //0=160x120 1=360x240 4=640x480
 constexpr int SW = 160 * res;               //Screen width
 constexpr int SH = 120 * res;               //Screen height

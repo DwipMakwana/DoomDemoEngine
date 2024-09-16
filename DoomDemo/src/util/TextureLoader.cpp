@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 
 #include "textures/T_00.h"
 #include "textures/T_01.h"
@@ -26,7 +27,6 @@
 
 #include "include/core/Engine.h"
 #include "include/util/TextureLoader.h"
-#include <string>
 
 void TextureLoader::Load()
 {

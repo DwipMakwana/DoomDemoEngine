@@ -6,7 +6,7 @@
 
 		struct TextureMaps
 		{
-			int w, h;			//Texture width and height
+			int w, h;					//Texture width and height
 			const int* name;			//Texture name
 		};
 

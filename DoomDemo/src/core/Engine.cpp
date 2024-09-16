@@ -1,6 +1,8 @@
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include <math.h>
+#include <windows.h>
 #include <iostream>
 #include <stdio.h>
 #include <GL/glut.h>    
@@ -501,8 +503,9 @@ void KeysUp(unsigned char key, int x, int y)
 void Init()
 {
     int x;
-    // Store sin/cos in degrees
-    for (x = 0; x < 360; x++)                               //Pre-calculate sin cos in degrees
+
+    //Pre-calculate sin cos in degrees
+    for (x = 0; x < 360; x++)
     {
         M.cos[x] = cos(x / 180.0 * M_PI);
         M.sin[x] = sin(x / 180.0 * M_PI);
@@ -515,7 +518,7 @@ void Init()
     texLoader->DefineTextures();
 }
 
-int main(int argc, char* argv[])
+int wmain(int argc, char** argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -529,5 +532,6 @@ int main(int argc, char* argv[])
     glutKeyboardFunc(KeysDown);
     glutKeyboardUpFunc(KeysUp);
     glutMainLoop();
+    
     return 0;
 }
