@@ -9,8 +9,7 @@ This project aimed to recreate the distinctive 3D aesthetic of classic games lik
 + 2D to 3D Algorithm logic: The algorithm involves defining walls as pairs of points, normalizing their coordinates, and projecting them onto the screen. By connecting these walls to form sectors and rendering them with vertical lines which simulates depth and creates a retro-style 3D environment.
 
 ## Screenshots
-<img src="1.png" width="750">
-<img src="2.png" width="750">
+<img src="SS_1.png" width="450">
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
