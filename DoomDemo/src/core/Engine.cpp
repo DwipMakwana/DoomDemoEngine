@@ -58,16 +58,16 @@ void MovePlayer()
     //Strafe left, right
     if (K.sr == 1)
     {
-        P.x += dy;
-        P.y -= dx;
-    }
-    if (K.sl == 1)
-    {
         P.x -= dy;
         P.y += dx;
     }
+    if (K.sl == 1)
+    {
+        P.x += dy;
+        P.y -= dx;
+    }
 
-    //Move up, down, look up, look down
+    //Look up, look down
     if (K.a == 1 && K.m == 1)
     {
         P.l -= 1;
@@ -76,13 +76,14 @@ void MovePlayer()
     {
         P.l += 1;
     }
+    //Move up, down
     if (K.w == 1 && K.m == 1)
     {
-        P.z -= 4;
+        P.z += 4;
     }
     if (K.s == 1 && K.m == 1)
     {
-        P.z += 4;
+        P.z -= 4;
     }
 }
 
@@ -112,6 +113,58 @@ void ClipBehindPlayer(int* x1, int* y1, int* z1, int x2, int y2, int z2)    //Cl
     *z1 = *z1 + s * (z2 - (*z1));
 }
 
+void DrawFloors()
+{
+    int x, y;
+    int xo = SW / 2;    //X offset
+    int yo = SH / 2;    //Y offset
+
+    float fov = 200;
+    float lookUpDown = -P.l * 2; if (lookUpDown > SH) { lookUpDown = SH; }
+    float moveUpDown = P.z / 16.0; if (moveUpDown == 0) { moveUpDown = 0.001; }
+    
+    int ys = -yo, ye = -lookUpDown;
+
+    if (moveUpDown < 0) { ye = -lookUpDown; ye = yo + lookUpDown; }
+
+    for (y = -yo; y < ye; y++)
+    {
+        for (x = -xo; x < xo; x++)
+        {
+            float z = y + lookUpDown; if (z == 0) { z = 0.0001; }
+            float fx = x / z * moveUpDown;       //World floor X
+            float fy = fov / z * moveUpDown;     //World floor Y
+            float rx = fx * M.sin[P.a] - fy * M.cos[P.a] + (P.y / 30.0);
+            float ry = fx * M.cos[P.a] + fy * M.sin[P.a] - (P.x / 30.0);
+
+            //Remove negative values
+            if (rx < 0)
+            {
+                rx = -rx + 1;
+            }
+            if (ry < 0)
+            {
+                ry = -ry + 1;
+            }
+
+            //Limit boundary(square)
+            if (rx <= 0 || ry <= 0 || rx >= 5 || ry >= 5)
+            {
+                continue;
+            }
+
+            if ((int)rx % 2 == (int)ry % 2)
+            {
+                DrawPixel(x + xo, y + yo, 255, 0, 0);
+            }
+            else
+            {
+                DrawPixel(x + xo, y + yo, 0, 255, 0);
+            }
+        }
+    }
+}
+
 void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int frontBack)
 {
     int x, y;
@@ -120,7 +173,7 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
     int wt = W[w].wt;
 
     //Horizontal wall texture starting and step value
-    float ht = 0, ht_step = (float)texLoader->Textures[wt].w / (float)(x2 - x1);
+    float ht = 0, ht_step = (float)texLoader->Textures[wt].w * W[w].u / (float)(x2 - x1);
 
     //Hold differences in the distance
     int dyb = b2 - b1;          //Y distance of the bottom line
@@ -163,7 +216,7 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
         int y2 = dyt * (x - xs + 0.5) / dx + t1;        //Y Top point
 
         //Vertical wall texture starting and step value
-        float vt = 0, vt_step = (float)texLoader->Textures[wt].h / (float)(y2 - y1);
+        float vt = 0, vt_step = (float)texLoader->Textures[wt].h * W[w].v / (float)(y2 - y1);
 
         //Clip Y
         if (y1 < 0)
@@ -199,10 +252,10 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
             //Normal wall
             for (y = y1; y < y2; y++)
             {
-                int pixel = (int)(texLoader->Textures[wt].h - vt - 1) * 3 * texLoader->Textures[wt].w + (int)ht * 3;
-                int r = texLoader->Textures[wt].name[pixel + 0];
-                int g = texLoader->Textures[wt].name[pixel + 1];
-                int b = texLoader->Textures[wt].name[pixel + 2];
+                int pixel = (int)(texLoader->Textures[wt].h - ((int)vt % texLoader->Textures[wt].h) - 1) * 3 * texLoader->Textures[wt].w + ((int)ht % texLoader->Textures[wt].w) * 3;
+                int r = texLoader->Textures[wt].name[pixel + 0] - W[w].shade / 2; if (r < 0) { r = 0; }
+                int g = texLoader->Textures[wt].name[pixel + 1] - W[w].shade / 2; if (g < 0) { g = 0; }
+                int b = texLoader->Textures[wt].name[pixel + 2] - W[w].shade / 2; if (b < 0) { b = 0; }
                 DrawPixel(x, y, r, g, b);
                 vt += vt_step;
             }
@@ -211,19 +264,54 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
 
         if (frontBack == 1)
         {
+            //Surfaces
+            int xo = SW / 2;                //X offset
+            int yo = SH / 2;                //Y offset
+            float fov = 200;                //FOV
+            int x2 = x - xo;                //x - x offset
+            int wo;                         //Wall offset
+            float tile = S[s].ss * 7;      //Imported surface tile
+
             if (S[s].surface == 1)
             {
                 y2 = S[s].surf[x];
+                wo = S[s].z1;
             }
             if (S[s].surface == 2)
             {
                 y1 = S[s].surf[x];
+                wo = S[s].z2;
             }
 
-            //Surfaces
-            for (y = y1; y < y2; y++)
+            float lookUpDown = -P.l * 6.2;                      if (lookUpDown > SH) { lookUpDown = SH; }
+            float moveUpDown = (float)P.z - wo / (float)yo;     if (moveUpDown == 0) { moveUpDown = 0.001; }
+            int ys = y1 - yo, ye = y2 - yo;
+
+            for (y = ys; y < ye; y++)
             {
-                DrawPixel(x, y, 255, 0, 0);
+                float z = y + lookUpDown; if (z == 0) { z = 0.0001; }
+                float fx = x2 / z * moveUpDown * tile;         //World floor X
+                float fy = fov / z * moveUpDown * tile;        //World floor Y
+                float rx = fx * M.sin[P.a] - fy * M.cos[P.a] + (P.y / 60.0 * tile);
+                float ry = fx * M.cos[P.a] + fy * M.sin[P.a] - (P.x / 60.0 * tile);
+
+                //Remove negative values
+                if (rx < 0)
+                {
+                    rx = -rx + 1;
+                }
+                if (ry < 0)
+                {
+                    ry = -ry + 1;
+                }
+
+                //Textures
+                int st = S[s].st;
+                int pixel = (int)(texLoader->Textures[st].h - ((int)ry % texLoader->Textures[st].h) - 1) * 3 * texLoader->Textures[st].w + ((int)rx % texLoader->Textures[st].w) * 3;
+                int r = texLoader->Textures[st].name[pixel + 0];
+                int g = texLoader->Textures[st].name[pixel + 1];
+                int b = texLoader->Textures[st].name[pixel + 2];
+                DrawPixel(x2 + xo, y + yo, r, g, b);
             }
         }
     }
