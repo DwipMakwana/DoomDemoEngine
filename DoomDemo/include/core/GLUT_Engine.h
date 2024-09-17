@@ -2,12 +2,12 @@
 
 int numSect = 0;                            //Number of sectors
 int numWall = 0;                            //Number of walls
-constexpr int res = 1;                      //0=160x120 1=360x240 4=640x480
+constexpr int res = 2;                      //Resolution multiplier
 constexpr int SW = 160 * res;               //Screen width
-constexpr int SH = 120 * res;               //Screen height
+constexpr int SH = 90 * res;                //Screen height
 constexpr int SW2 = SW / 2;                 //Half of screen width
 constexpr int SH2 = SH / 2;                 //Half of screen height
-constexpr int pixelScale = 4 / res;         //OpenGL pixel scale
+constexpr int pixelScale = 6 / res;         //OpenGL pixel scale
 constexpr int GLSW = SW * pixelScale;       //OpenGL window width
 constexpr int GLSH = SH * pixelScale;       //OpenGL window height
 

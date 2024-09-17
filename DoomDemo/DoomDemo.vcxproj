@@ -86,16 +86,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\My Data\Projects\C++ Projects\DoomDemo\Linking\lib;C:\My Data\Projects\C++ Projects\DoomDemo\Linking\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>GL\glut32.lib;GLFW\glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2\SDL2_ttf.lib;SDL2\SDL2.lib;freetype\freetype.lib;GL\glut32.lib;GLFW\glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/FORCE:MULTIPLE %(AdditionalOptions)</AdditionalOptions>
       <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <SuppressStartupBanner>false</SuppressStartupBanner>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -150,11 +150,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\Engine.cpp" />
+    <ClCompile Include="src\core\SDL2_Engine.cpp" />
     <ClCompile Include="src\util\TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\core\Engine.h" />
+    <ClInclude Include="include\core\SDL2_Engine.h" />
     <ClInclude Include="include\util\TextureLoader.h" />
     <ClInclude Include="textures\T_00.h" />
     <ClInclude Include="textures\T_01.h" />
@@ -181,9 +181,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="glfw3.dll" />
+    <None Include="glut.dll" />
+    <None Include="glut32.dll" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="assets\doom-wolfenstein-humbnail.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="fonts\arial.ttf" />
+    <Font Include="fonts\Minecraft.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

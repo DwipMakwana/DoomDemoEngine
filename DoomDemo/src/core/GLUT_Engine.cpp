@@ -2,16 +2,18 @@
 
 #include <cmath>
 #include <math.h>
+#include <GL/glut.h>
+#include <FTGL/ftgl.h>
 #include <windows.h>
 #include <iostream>
 #include <stdio.h>
-#include <GL/glut.h>    
-
-#include "include/core/Engine.h"
-#include "include/util/TextureLoader.h"
 #include <string>
 
-TextureLoader* texLoader = new TextureLoader;
+#include "include/core/GLUT_Engine.h"
+#include "include/util/TextureLoader.h"
+
+TextureLoader* texLoader = new TextureLoader();
+FTFont* font;
 
 void DrawPixel(int x, int y, int r, int g, int b)                  //Draw a pixel at x/y with rgb
 {
@@ -93,7 +95,7 @@ void ClearBackground()
 {
     for (int y = 0; y < SH; y++)
     {
-        for (int x = 0; x < SW; x++) { DrawPixel(x, y, 0, 61, 130); } //Clear background color
+        for (int x = 0; x < SW; x++) { DrawPixel(x, y, 64, 64, 64); } //Clear background color
     }
 }
 
@@ -127,7 +129,10 @@ void DrawFloors()
     
     int ys = -yo, ye = -lookUpDown;
 
-    if (moveUpDown < 0) { ye = -lookUpDown; ye = yo + lookUpDown; }
+    if (moveUpDown < 0) 
+    { 
+        ye = -lookUpDown; ye = yo + lookUpDown; 
+    }
 
     for (y = -yo; y < ye; y++)
     {
@@ -149,19 +154,15 @@ void DrawFloors()
                 ry = -ry + 1;
             }
 
-            //Limit boundary(square)
-            if (rx <= 0 || ry <= 0 || rx >= 5 || ry >= 5)
-            {
-                continue;
-            }
+            int c = 191 * (255 - (z / (float)yo));
 
             if ((int)rx % 2 == (int)ry % 2)
             {
-                DrawPixel(x + xo, y + yo, 255, 0, 0);
+                DrawPixel(x + xo, y + yo, c, c, c);
             }
             else
             {
-                DrawPixel(x + xo, y + yo, 0, 255, 0);
+                DrawPixel(x + xo, y + yo, 64, 64, 64);
             }
         }
     }
@@ -272,7 +273,7 @@ void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int 
             float fov = 200;                //FOV
             int x2 = x - xo;                //x - x offset
             int wo;                         //Wall offset
-            float tile = S[s].ss * 7;      //Imported surface tile
+            float tile = S[s].ss * 7;       //Imported surface tile
 
             if (S[s].surface == 1)
             {
@@ -465,15 +466,16 @@ void Display()
     if (T.fr1 - T.fr2 >= 50)                        //Only draw 20 frames/second
     {
         ClearBackground();
+        DrawFloors();
         MovePlayer();
         Draw3D();
 
         T.fr2 = T.fr1;
         glutSwapBuffers();
-        glutReshapeWindow(GLSW, GLSH);             //prevent window scaling
+        glutReshapeWindow(GLSW, GLSH);              //prevent window scaling
     }
 
-    T.fr1 = glutGet(GLUT_ELAPSED_TIME);          //1000 Milliseconds per second
+    T.fr1 = glutGet(GLUT_ELAPSED_TIME);             //1000 Milliseconds per second
     glutPostRedisplay();
 }
 
@@ -518,7 +520,7 @@ void Init()
     texLoader->DefineTextures();
 }
 
-int wmain(int argc, char** argv)
+int old_main(int argc, char** argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);

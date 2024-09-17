@@ -25,7 +25,8 @@
 #include "textures/T_NUMBERS.h"
 #include "textures/T_VIEW2D.h"
 
-#include "include/core/Engine.h"
+//#include "include/core/GLUT_Engine.h"
+#include "include/core/SDL2_Engine.h"
 #include "include/util/TextureLoader.h"
 
 void TextureLoader::Load()

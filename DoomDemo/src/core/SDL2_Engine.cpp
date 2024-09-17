@@ -1,0 +1,659 @@
+#define _USE_MATH_DEFINES
+#define SDL_MAIN_HANDLED
+
+#include <cmath>
+#include <math.h>
+#include <windows.h>
+#include <iostream>
+#include <stdio.h>
+#include <string>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include <SDL2/SDL_ttf.h>
+
+#include "include/core/SDl2_Engine.h"
+#include "include/util/TextureLoader.h"
+
+TextureLoader* texLoader = new TextureLoader();
+SDL_Renderer* renderer;
+SDL_Surface* surface;
+SDL_Texture* pixelTexture;
+TTF_Font* font;
+SDL_Color wColor = { 255, 255, 255 }; // White color
+
+void DrawPixel(int x, int y, int r, int g, int b) 
+{
+    // Set the draw color
+    SDL_SetRenderDrawColor(renderer, r, g, b, SDL_ALPHA_OPAQUE); 
+    
+    // Draw the point
+    SDL_RenderDrawPoint(renderer, x * pixelScale + 2, y * pixelScale + 2); 
+}
+
+void MovePlayer()
+{
+    //Move up, down, left, right
+    if (K.a == 1 && K.m == 0)
+    {
+        P.a -= 4;
+
+        if (P.a < 0)
+        {
+            P.a += 360;
+        }
+    }
+    if (K.d == 1 && K.m == 0)
+    {
+        P.a += 4;
+
+        if (P.a > 359)
+        {
+            P.a -= 360;
+        }
+    }
+
+    int dx = M.sin[P.a] * 10.0;
+    int dy = M.cos[P.a] * 10.0;
+
+    if (K.w == 1 && K.m == 0)
+    {
+        P.x += dx;
+        P.y += dy;
+    }
+    if (K.s == 1 && K.m == 0)
+    {
+        P.x -= dx;
+        P.y -= dy;
+    }
+
+    //Strafe left, right
+    if (K.sr == 1)
+    {
+        P.x -= dy;
+        P.y += dx;
+    }
+    if (K.sl == 1)
+    {
+        P.x += dy;
+        P.y -= dx;
+    }
+
+    //Look up, look down
+    if (K.a == 1 && K.m == 1)
+    {
+        P.l -= 1;
+    }
+    if (K.d == 1 && K.m == 1)
+    {
+        P.l += 1;
+    }
+    //Move up, down
+    if (K.w == 1 && K.m == 1)
+    {
+        P.z += 4;
+    }
+    if (K.s == 1 && K.m == 1)
+    {
+        P.z -= 4;
+    }
+}
+
+void ClearBackground()
+{
+    for (int y = 0; y < SH; y++)
+    {
+        //Clear background color
+        for (int x = 0; x < SW; x++) 
+        { 
+            DrawPixel(x, y, 64, 64, 64); 
+        } 
+    }
+}
+
+void ClipBehindPlayer(int* x1, int* y1, int* z1, int x2, int y2, int z2)    //Clip line
+{
+    float da = *y1;
+    float db = y2;
+
+    float d = da - db;
+    if (d == 0)
+    {
+        d = 1;
+    }
+
+    float s = da / (da - db);
+
+    *x1 = *x1 + s * (x2 - (*x1));
+    *y1 = *y1 + s * (y2 - (*y1)); if (*y1 == 0) { *y1 = 1; }
+    *z1 = *z1 + s * (z2 - (*z1));
+}
+
+void DrawFloors()
+{
+    int x, y;
+    int xo = SW / 2;    //X offset
+    int yo = SH / 2;    //Y offset
+
+    float fov = 200;
+    float lookUpDown = -P.l * 2; if (lookUpDown > SH) { lookUpDown = SH; }
+    float moveUpDown = P.z / 16.0; if (moveUpDown == 0) { moveUpDown = 0.001; }
+
+    int ys = -yo, ye = -lookUpDown;
+
+    if (moveUpDown < 0)
+    {
+        ye = -lookUpDown; ye = yo + lookUpDown;
+    }
+
+    for (y = -yo; y < ye; y++)
+    {
+        for (x = -xo; x < xo; x++)
+        {
+            float z = y + lookUpDown; if (z == 0) { z = 0.0001; }
+            float fx = x / z * moveUpDown;       //World floor X
+            float fy = fov / z * moveUpDown;     //World floor Y
+            float rx = fx * M.sin[P.a] - fy * M.cos[P.a] + (P.y / 30.0);
+            float ry = fx * M.cos[P.a] + fy * M.sin[P.a] - (P.x / 30.0);
+
+            //Remove negative values
+            if (rx < 0)
+            {
+                rx = -rx + 1;
+            }
+            if (ry < 0)
+            {
+                ry = -ry + 1;
+            }
+
+            int c = 191 * (255 - (z / (float)yo));
+
+            if ((int)rx % 2 == (int)ry % 2)
+            {
+                DrawPixel(x + xo, y + yo, c, c, c);
+            }
+            else
+            {
+                DrawPixel(x + xo, y + yo, 64, 64, 64);
+            }
+        }
+    }
+}
+
+void DrawWall(int x1, int x2, int b1, int b2, int t1, int t2, int s, int w, int frontBack)
+{
+    int x, y;
+
+    //Wall texture
+    int wt = W[w].wt;
+
+    //Horizontal wall texture starting and step value
+    float ht = 0, ht_step = (float)texLoader->Textures[wt].w * W[w].u / (float)(x2 - x1);
+
+    //Hold differences in the distance
+    int dyb = b2 - b1;          //Y distance of the bottom line
+    int dyt = t2 - t1;          //Y distance of the top line
+    int dx = x2 - x1;           //X Distance
+
+    if (dx == 0)
+    {
+        dx = 1;
+    }
+
+    int xs = x1;                //Hold the initial x1 starting positions
+
+    //Clip X
+    //Clip left
+    if (x1 < 0)
+    {
+        ht -= ht_step * x1;
+        x1 = 0;
+    }
+    if (x2 < 0)
+    {
+        x2 = 0;
+    }
+    //Clip right
+    if (x1 > SW)
+    {
+        x1 = SW;
+    }
+    if (x2 > SW)
+    {
+        x2 = SW;
+    }
+
+    //Draw x vertical lines
+    for (x = x1; x < x2; x++)
+    {
+        //The Y start and end point
+        int y1 = dyb * (x - xs + 0.5) / dx + b1;        //Y bottom point
+        int y2 = dyt * (x - xs + 0.5) / dx + t1;        //Y Top point
+
+        //Vertical wall texture starting and step value
+        float vt = 0, vt_step = (float)texLoader->Textures[wt].h * W[w].v / (float)(y2 - y1);
+
+        //Clip Y
+        if (y1 < 0)
+        {
+            vt -= vt_step * y1;
+            y1 = 0;
+        }
+        if (y2 < 0)
+        {
+            y2 = 0;
+        }
+        if (y1 > SH)
+        {
+            y1 = SH;
+        }
+        if (y2 > SH)
+        {
+            y2 = SH;
+        }
+
+        //Draw front wall
+        if (frontBack == 0)
+        {
+            if (S[s].surface == 1)
+            {
+                S[s].surf[x] = y1;
+            }
+            if (S[s].surface == 2)
+            {
+                S[s].surf[x] = y2;
+            }
+
+            //Normal wall
+            for (y = y1; y < y2; y++)
+            {
+                int pixel = (int)(texLoader->Textures[wt].h - ((int)vt % texLoader->Textures[wt].h) - 1) * 3 * texLoader->Textures[wt].w + ((int)ht % texLoader->Textures[wt].w) * 3;
+                int r = texLoader->Textures[wt].name[pixel + 0] - W[w].shade / 2; if (r < 0) { r = 0; }
+                int g = texLoader->Textures[wt].name[pixel + 1] - W[w].shade / 2; if (g < 0) { g = 0; }
+                int b = texLoader->Textures[wt].name[pixel + 2] - W[w].shade / 2; if (b < 0) { b = 0; }
+                DrawPixel(x, y, r, g, b);
+                vt += vt_step;
+            }
+            ht += ht_step;
+        }
+
+        if (frontBack == 1)
+        {
+            //Surfaces
+            int xo = SW / 2;                //X offset
+            int yo = SH / 2;                //Y offset
+            float fov = 200;                //FOV
+            int x2 = x - xo;                //x - x offset
+            int wo;                         //Wall offset
+            float tile = S[s].ss * 7;       //Imported surface tile
+
+            if (S[s].surface == 1)
+            {
+                y2 = S[s].surf[x];
+                wo = S[s].z1;
+            }
+            if (S[s].surface == 2)
+            {
+                y1 = S[s].surf[x];
+                wo = S[s].z2;
+            }
+
+            float lookUpDown = -P.l * 6.2;                      if (lookUpDown > SH) { lookUpDown = SH; }
+            float moveUpDown = (float)P.z - wo / (float)yo;     if (moveUpDown == 0) { moveUpDown = 0.001; }
+            int ys = y1 - yo, ye = y2 - yo;
+
+            for (y = ys; y < ye; y++)
+            {
+                float z = y + lookUpDown; if (z == 0) { z = 0.0001; }
+                float fx = x2 / z * moveUpDown * tile;         //World floor X
+                float fy = fov / z * moveUpDown * tile;        //World floor Y
+                float rx = fx * M.sin[P.a] - fy * M.cos[P.a] + (P.y / 60.0 * tile);
+                float ry = fx * M.cos[P.a] + fy * M.sin[P.a] - (P.x / 60.0 * tile);
+
+                //Remove negative values
+                if (rx < 0)
+                {
+                    rx = -rx + 1;
+                }
+                if (ry < 0)
+                {
+                    ry = -ry + 1;
+                }
+
+                //Textures
+                int st = S[s].st;
+                int pixel = (int)(texLoader->Textures[st].h - ((int)ry % texLoader->Textures[st].h) - 1) * 3 * texLoader->Textures[st].w + ((int)rx % texLoader->Textures[st].w) * 3;
+                int r = texLoader->Textures[st].name[pixel + 0];
+                int g = texLoader->Textures[st].name[pixel + 1];
+                int b = texLoader->Textures[st].name[pixel + 2];
+                DrawPixel(x2 + xo, y + yo, r, g, b);
+            }
+        }
+    }
+}
+
+int Dist(int x1, int y1, int x2, int y2)
+{
+    int distance = sqrt((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1));
+    return distance;
+}
+
+void Draw3D()
+{
+    int x, s, w, loop, frontBack, cycles;
+    int wx[4], wy[4], wz[4];
+    float CS = M.cos[P.a], SN = M.sin[P.a];
+
+    //Order sectors by distance
+    for (s = 0; s < numSect - 1; s++)
+    {
+        for (w = 0; w < numSect - s - 1; w++)
+        {
+            if (S[w].d < S[w + 1].d)
+            {
+                Sector st = S[w];
+                S[w] = S[w + 1];
+                S[w + 1] = st;
+            }
+        }
+    }
+
+    //Draw sectors
+    for (s = 0; s < numSect; s++)
+    {
+        //Clear distance
+        S[s].d = 0;
+
+        if (P.z < S[s].z1)          //Botttom surface
+        {
+            S[s].surface = 1;
+            cycles = 2;
+
+            for (x = 0; x < SW; x++)
+            {
+                S[s].surf[s] = SH;
+            }
+        }
+        else if (P.z > S[s].z2)     //Top surface
+        {
+            S[s].surface = 2;
+            cycles = 2;
+
+            for (x = 0; x < SW; x++)
+            {
+                S[s].surf[s] = 0;
+            }
+        }
+        else                        //No surfaces
+        {
+            S[s].surface = 0;
+            cycles = 1;
+        }
+
+        for (frontBack = 0; frontBack < cycles; frontBack++)
+        {
+            for (w = S[s].ws; w < S[s].we; w++)
+            {
+                //Offset bottom 2 points by player
+                int x1 = W[w].x1 - P.x, y1 = W[w].y1 - P.y;
+                int x2 = W[w].x2 - P.x, y2 = W[w].y2 - P.y;
+
+                //Swap for surface
+                if (frontBack == 1)
+                {
+                    int swp = x1;
+                    x1 = x2;
+                    x2 = swp;
+
+                    swp = y1;;
+                    y1 = y2;
+                    y2 = swp;
+                }
+
+                //World X position
+                wx[0] = x1 * CS - y1 * SN;
+                wx[1] = x2 * CS - y2 * SN;
+                wx[2] = wx[0];
+                wx[3] = wx[1];                                      //Top line has the same x
+
+                //World Y position (depth)
+                wy[0] = y1 * CS + x1 * SN;
+                wy[1] = y2 * CS + x2 * SN;
+                wy[2] = wy[0];
+                wy[3] = wy[1];                                      //Top line has the same y
+
+                //Store the wall distance
+                S[s].d += Dist(0, 0, (wx[0] + wx[1]) / 2, (wy[0] + wy[1]) / 2);
+
+                //World Z height;
+                wz[0] = S[s].z1 - P.z + ((P.l * wy[0]) / 32.0);
+                wz[1] = S[s].z1 - P.z + ((P.l * wy[1]) / 32.0);
+                wz[2] = S[s].z2 - P.z + ((P.l * wy[0]) / 32.0);
+                wz[3] = S[s].z2 - P.z + ((P.l * wy[1]) / 32.0);           //Top line has the same z
+
+                //Do not draw if behind the player
+                if (wy[0] < 1 && wy[1] < 1) { continue; }             //Wall behind the player, do not draw!
+
+                //Point 1 behind player, clip!
+                if (wy[0] < 1)
+                {
+                    ClipBehindPlayer(&wx[0], &wy[0], &wz[0], wx[1], wy[1], wz[1]);      //Bottom line
+                    ClipBehindPlayer(&wx[2], &wy[2], &wz[2], wx[3], wy[3], wz[3]);      //Top line
+                }
+
+                //Point 2 behind the player, clip!
+                if (wy[1] < 1)
+                {
+                    ClipBehindPlayer(&wx[1], &wy[1], &wz[1], wx[0], wy[0], wz[0]);      //Bottom line
+                    ClipBehindPlayer(&wx[3], &wy[3], &wz[3], wx[2], wy[2], wz[2]);      //Top line
+                }
+
+                //Screen X and Y positions
+                wx[0] = wx[0] * 200 / wy[0] + SW2;
+                wy[0] = wz[0] * 200 / wy[0] + SH2;
+
+                wx[1] = wx[1] * 200 / wy[1] + SW2;
+                wy[1] = wz[1] * 200 / wy[1] + SH2;
+
+                wx[2] = wx[2] * 200 / wy[2] + SW2;
+                wy[2] = wz[2] * 200 / wy[2] + SH2;
+
+                wx[3] = wx[3] * 200 / wy[3] + SW2;
+                wy[3] = wz[3] * 200 / wy[3] + SH2;
+
+                //Draw points
+                DrawWall(wx[0], wx[1], wy[0], wy[1], wy[2], wy[3], s, w, frontBack);
+            }
+            //Find average sector distance
+            if (S[s].d != 0)
+            {
+                S[s].d /= (S[s].we - S[s].ws);
+            }
+        }
+    }
+}
+
+void Init()
+{
+    int x;
+
+    //Pre-calculate sin cos in degrees
+    for (x = 0; x < 360; x++)
+    {
+        M.cos[x] = cos(x / 180.0 * M_PI);
+        M.sin[x] = sin(x / 180.0 * M_PI);
+    }
+
+    //Init player variables
+    P.x = 70; P.y = -110; P.z = 20; P.a = 0; P.l = 0;
+
+    //Define textures
+    texLoader->DefineTextures();
+}
+
+void handleKeyboardEvent(SDL_Event* event) {
+    if (event->type == SDL_KEYDOWN) {
+        switch (event->key.keysym.sym) {
+        case SDLK_w:
+            K.w = 1;
+            break;
+        case SDLK_s:
+            K.s = 1;
+            break;
+        case SDLK_a:
+            K.a = 1;
+            break;
+        case SDLK_d:
+            K.d = 1;
+            break;
+        case SDLK_m:
+            K.m = 1;
+            break;
+        case SDLK_PERIOD:
+            K.sr = 1;
+            break;
+        case SDLK_COMMA:
+            K.sl = 1;
+            break;
+        case SDLK_RETURN:
+            texLoader->Load();
+            break;
+        }
+    }
+    else if (event->type == SDL_KEYUP) {
+        switch (event->key.keysym.sym) {
+        case SDLK_w:
+            K.w = 0;
+            break;
+        case SDLK_s:
+            K.s = 0;
+            break;
+        case SDLK_a:
+            K.a = 0;
+            break;
+        case SDLK_d:
+            K.d = 0;
+            break;
+        case SDLK_m:
+            K.m = 0;
+            break;
+        case SDLK_PERIOD:
+            K.sr = 0;
+            break;
+        case SDLK_COMMA:
+            K.sl = 0;
+            break;
+        }
+    }
+}
+
+void Display(SDL_Window* window) 
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE); // Clear the screen with black
+    SDL_RenderClear(renderer);
+
+    if (SDL_GetTicks() - T.fr2 >= 50) 
+    {
+        ClearBackground();
+        DrawFloors();
+        MovePlayer();
+        Draw3D();
+
+        T.fr2 = SDL_GetTicks();
+        SDL_GL_SwapWindow(window);
+    }
+
+    T.fr1 = SDL_GetTicks();
+
+    SDL_RenderPresent(renderer);
+}
+
+int wmain(int argc, char** argv) 
+{
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    if (TTF_Init() < 0) {
+        std::cerr << "Failed to initialize SDL_ttf: " << TTF_GetError() << std::endl;
+        return 1;
+    }
+
+    SDL_Window* window = SDL_CreateWindow("Doom Engine Demo", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, GLSW, GLSH, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    if (!window)
+    {
+        std::cerr << "Error creating window: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    SDL_GLContext glContext = SDL_GL_CreateContext(window);
+    if (!glContext) 
+    {
+        std::cerr << "Error creating OpenGL context: " << SDL_GetError() << std::endl;
+        return 1;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!renderer) {
+        std::cerr << "Error creating renderer: " << SDL_GetError() << std::endl;
+        return
+            1;
+    }
+
+    pixelTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, 1, 1);
+    if (!pixelTexture) {
+        std::cerr << "Error creating pixel texture: " << SDL_GetError() << std::endl;
+    }
+
+    if (TTF_Init() == -1) {
+        std::cerr << "Error initializing SDL_ttf: " << TTF_GetError() << std::endl;
+        return 1;
+    }
+
+    font = TTF_OpenFont("fonts/arial.ttf", 24);
+    if (!font) {
+        std::cerr << "Error loading font: " << TTF_GetError() << std::endl;
+        return 1;
+    }
+
+    surface = TTF_RenderText_Solid(font, "Hello, SDL2!", wColor);
+    if (!surface) {
+        std::cerr << "Failed to create surface: " << TTF_GetError() << std::endl;
+        return 1;
+    }
+
+    SDL_Rect destRect = { 100, 100, surface->w, surface->h };
+
+    Init();
+
+    bool running = true;
+    while (running) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) 
+        {
+            if (event.type == SDL_QUIT) 
+            {
+                running = false;
+            }
+            else
+            {
+                handleKeyboardEvent(&event);
+            }
+        }
+
+        Display(window);
+        SDL_GL_SwapWindow(window);
+    }
+
+    // Cleanup
+    SDL_DestroyTexture(pixelTexture);
+    TTF_CloseFont(font);
+    SDL_GL_DeleteContext(glContext);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    TTF_Quit();
+    SDL_Quit();
+
+    return 0;
+}
