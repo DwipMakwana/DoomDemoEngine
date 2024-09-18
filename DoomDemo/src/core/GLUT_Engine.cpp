@@ -3,17 +3,20 @@
 #include <cmath>
 #include <math.h>
 #include <GL/glut.h>
-#include <FTGL/ftgl.h>
+#include <ft2build.h>
 #include <windows.h>
 #include <iostream>
 #include <stdio.h>
 #include <string>
 
+#include FT_FREETYPE_H
+
 #include "include/core/GLUT_Engine.h"
 #include "include/util/TextureLoader.h"
 
 TextureLoader* texLoader = new TextureLoader();
-FTFont* font;
+FT_Library ft;
+FT_Face face;
 
 void DrawPixel(int x, int y, int r, int g, int b)                  //Draw a pixel at x/y with rgb
 {
@@ -21,6 +24,68 @@ void DrawPixel(int x, int y, int r, int g, int b)                  //Draw a pixe
     glBegin(GL_POINTS);
     glVertex2i(x * pixelScale + 2, y * pixelScale + 2);
     glEnd();
+}
+
+void DrawCustomText(const char* text, float x, float y, float r, float g, float b, int size) 
+{
+    const char* p;
+    FT_GlyphSlot glyph = face->glyph;
+
+    // Set text color
+    glColor3f(r, g, b); 
+    // Set text size
+    FT_Set_Pixel_Sizes(face, 0, size); 
+
+    for (p = text; *p; p++) {
+        if (FT_Load_Char(face, *p, FT_LOAD_RENDER)) {
+            continue;
+        }
+
+        // Create a texture from the glyph bitmap
+        GLuint textureID;
+        glGenTextures(1, &textureID);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            glyph->bitmap.width,
+            glyph->bitmap.rows,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            glyph->bitmap.buffer
+        );
+
+        float x2 = x + glyph->bitmap_left;
+        float y2 = y - glyph->bitmap_top;
+        float w = glyph->bitmap.width;
+        float h = glyph->bitmap.rows;
+
+        // Ensure the texture coordinates are within the range [0, 1]
+        float texCoords[8] = {
+            0.0f, 0.0f,
+            1.0f, 0.0f,
+            1.0f, 1.0f,
+            0.0f, 1.0f
+        };
+
+        glBegin(GL_QUADS);
+        glTexCoord2fv(texCoords);
+        glTexCoord2f(0, 0); glVertex2f(x2, y2);
+        glTexCoord2f(1, 0); glVertex2f(x2 + w, y2);
+        glTexCoord2f(1, 1); glVertex2f(x2 + w, y2 + h);
+        glTexCoord2f(0, 1); glVertex2f(x2, y2 + h);
+        glEnd();
+
+        // Delete the texture
+        glDeleteTextures(1, &textureID);
+
+        x += (glyph->advance.x >> 6);
+        y += (glyph->advance.y >> 6);
+    }
+
+    glDisable(GL_BLEND);
 }
 
 void MovePlayer()
@@ -465,10 +530,13 @@ void Display()
 {
     if (T.fr1 - T.fr2 >= 50)                        //Only draw 20 frames/second
     {
+        glClear(GL_COLOR_BUFFER_BIT);
+
         ClearBackground();
-        DrawFloors();
         MovePlayer();
+        DrawFloors();
         Draw3D();
+        DrawCustomText("Press enter to load level...", 100, 100, 64, 64, 64, 24);
 
         T.fr2 = T.fr1;
         glutSwapBuffers();
@@ -504,10 +572,8 @@ void KeysUp(unsigned char key, int x, int y)
 
 void Init()
 {
-    int x;
-
     //Pre-calculate sin cos in degrees
-    for (x = 0; x < 360; x++)
+    for (int x = 0; x < 360; x++)
     {
         M.cos[x] = cos(x / 180.0 * M_PI);
         M.sin[x] = sin(x / 180.0 * M_PI);
@@ -520,20 +586,39 @@ void Init()
     texLoader->DefineTextures();
 }
 
-int old_main(int argc, char** argv)
+int wmain(int argc, char** argv)
 {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
     glutInitWindowPosition(GLSW / 2, GLSH / 2);
     glutInitWindowSize(GLSW, GLSH);
     glutCreateWindow("Doom Engine Demo");
-    glPointSize(pixelScale);                        // pixel size
-    gluOrtho2D(0, GLSW, 0, GLSH);                   // origin bottom left
+
+    if (FT_Init_FreeType(&ft)) {
+        std::cerr << "Could not init FreeType Library" << std::endl;
+        return -1;
+    }
+
+    if (FT_New_Face(ft, "fonts/arial.ttf", 0, &face)) {
+        std::cerr << "Could not open font" << std::endl;
+        return -1;
+    }
+    
+    //Pixel size
+    glPointSize(pixelScale);                        
+    //Origin bottom left
+    gluOrtho2D(0, GLSW, 0, GLSH);                   
+    
     Init();
+    
     glutDisplayFunc(Display);
     glutKeyboardFunc(KeysDown);
     glutKeyboardUpFunc(KeysUp);
+    
     glutMainLoop();
+
+    FT_Done_Face(face);
+    FT_Done_FreeType(ft);
     
     return 0;
 }

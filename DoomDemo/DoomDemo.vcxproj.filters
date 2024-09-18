@@ -27,7 +27,7 @@
     <ClCompile Include="src\util\TextureLoader.cpp">
       <Filter>src\levelEditor</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\SDL2_Engine.cpp" />
+    <ClCompile Include="src\core\GLUT_Engine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\util\TextureLoader.h">
@@ -55,11 +55,12 @@
     <ClInclude Include="textures\T_19.h" />
     <ClInclude Include="textures\T_NUMBERS.h" />
     <ClInclude Include="textures\T_VIEW2D.h" />
-    <ClInclude Include="include\core\SDL2_Engine.h" />
+    <ClInclude Include="include\core\GLUT_Engine.h" />
+    <ClInclude Include="level\level.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
-    <None Include="glfw3.dll" />
+    <None Include="freetype.dll" />
     <None Include="glut.dll" />
     <None Include="glut32.dll" />
   </ItemGroup>

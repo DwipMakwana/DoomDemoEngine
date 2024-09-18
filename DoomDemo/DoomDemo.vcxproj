@@ -92,7 +92,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2\SDL2_ttf.lib;SDL2\SDL2.lib;freetype\freetype.lib;GL\glut32.lib;GLFW\glfw3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>freetype\freetype.lib;GL\glut32.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/FORCE:MULTIPLE %(AdditionalOptions)</AdditionalOptions>
       <EntryPointSymbol>wmainCRTStartup</EntryPointSymbol>
       <SuppressStartupBanner>false</SuppressStartupBanner>
@@ -150,12 +150,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\core\SDL2_Engine.cpp" />
+    <ClCompile Include="src\core\GLUT_Engine.cpp" />
     <ClCompile Include="src\util\TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\core\SDL2_Engine.h" />
+    <ClInclude Include="include\core\GLUT_Engine.h" />
     <ClInclude Include="include\util\TextureLoader.h" />
+    <ClInclude Include="level\level.h" />
     <ClInclude Include="textures\T_00.h" />
     <ClInclude Include="textures\T_01.h" />
     <ClInclude Include="textures\T_02.h" />
@@ -181,7 +182,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
-    <None Include="glfw3.dll" />
+    <None Include="freetype.dll" />
     <None Include="glut.dll" />
     <None Include="glut32.dll" />
   </ItemGroup>
