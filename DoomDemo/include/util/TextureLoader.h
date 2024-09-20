@@ -12,6 +12,7 @@
 
 		TextureMaps Textures[64];
 
+		void Save();
 		void Load();
 		void DefineTextures();
 	};

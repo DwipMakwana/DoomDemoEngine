@@ -28,6 +28,44 @@
 #include "include/core/GLUT_Engine.h"
 #include "include/util/TextureLoader.h"
 
+void TextureLoader::Save() 
+{
+    std::ofstream file("level/level.h");
+
+    if (!file.is_open()) 
+    {
+        std::cerr << "Error opening the file level.h" << std::endl;
+        return;
+    }
+    if (numSect == 0) 
+    {
+        return;
+    }
+
+    //Number of sectors
+    file << numSect << std::endl; 
+
+    //Save sector
+    for (int s = 0; s < numSect; ++s) 
+    { 
+        file << S[s].ws << " " << S[s].we << " " << S[s].z1 << " " << S[s].z2 << " " << S[s].st << " " << S[s].ss << std::endl;
+    }
+
+    //Number of walls
+    file << numWall << std::endl; 
+    
+    //Save walls
+    for (int w = 0; w < numWall; ++w) 
+    {
+        file << W[w].x1 << " " << W[w].y1 << " " << W[w].x2 << " " << W[w].y2 << " " << W[w].wt << " " << W[w].u << " " << W[w].v << " " << W[w].shade << std::endl;
+    }
+
+    //Player position
+    file << std::endl << P.x << " " << P.y << " " << P.z << " " << P.a << " " << P.l << std::endl; 
+
+    file.close();
+}
+
 void TextureLoader::Load()
 {
     std::ifstream file("level/level.h");
